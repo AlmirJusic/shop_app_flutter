@@ -86,15 +86,18 @@ class Products with ChangeNotifier {
     )
         .then((response) {
       final newProduct = Product(
-        id: DateTime.now().toString(),
         title: product.title,
         description: product.description,
         price: product.price,
         imageUrl: product.imageUrl,
+        id: json.decode(response.body)['name'],
       );
 
       _items.add(newProduct);
       notifyListeners();
+    }).catchError((error) {
+      print(error);
+      throw error;
     });
   }
 
