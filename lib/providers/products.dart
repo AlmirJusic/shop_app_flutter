@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shop_app_flutter/models/http_exception.dart';
 import 'dart:convert';
 import './product.dart';
 
@@ -125,19 +126,47 @@ class Products with ChangeNotifier {
     }
   }
 
-  void updateProduct(String id, Product newProduct) {
-    final productIndex = _items.indexWhere((product) => product.id == id);
+  Future<void> updateProduct(String id, Product newProduct) async {
+    try {
+      final productIndex = _items.indexWhere((product) => product.id == id);
 
-    if (productIndex >= 0) {
-      _items[productIndex] = newProduct;
-      notifyListeners();
-    } else {
-      print('...');
+      if (productIndex >= 0) {
+        final url = Uri.parse(
+            'https://shop-app-flutter-d720d-default-rtdb.europe-west1.firebasedatabase.app/products/$id.json');
+        await http.patch(url,
+            body: json.encode({
+              'title': newProduct.title,
+              'description': newProduct.description,
+              'imageUrl': newProduct.imageUrl,
+              'price': newProduct.price,
+            }));
+        _items[productIndex] = newProduct;
+        notifyListeners();
+      } else {
+        print('...');
+      }
+    } catch (error) {
+      throw error;
     }
   }
 
-  void deleteProduct(String id) {
-    _items.removeWhere((element) => element.id == id);
+  Future<void> deleteProduct(String id) async {
+    final url = Uri.parse(
+        'https://shop-app-flutter-d720d-default-rtdb.europe-west1.firebasedatabase.app/products/$id.json');
+
+    final existingProductIndex =
+        _items.indexWhere((element) => element.id == id);
+    Product? existingProduct = _items[existingProductIndex];
+    _items.removeAt(existingProductIndex);
     notifyListeners();
+
+    final response = await http.delete(url);
+
+    if (response.statusCode >= 400) {
+      _items.insert(existingProductIndex, existingProduct);
+      notifyListeners();
+      throw HttpException('Could not delete product!');
+    }
+    existingProduct = null;
   }
 }

@@ -11,6 +11,8 @@ class UserProductItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scaffold = ScaffoldMessenger.of(context); //mora zbog async
+
     return ListTile(
       title: Text(title),
       leading: CircleAvatar(
@@ -35,30 +37,44 @@ class UserProductItem extends StatelessWidget {
             // ili upotrebom alert dialoga
             onPressed: () => showDialog(
               context: context,
-              builder: (ctx) => AlertDialog(
-                title: const Text('Are u sure?'),
-                content:
-                    const Text('Do u want to remove the item from the cart?'),
-                actions: [
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.of(ctx).pop(false);
-                    },
-                    child: const Text('No'),
-                  ),
-                  ElevatedButton(
-                    onPressed: () {
-                      Provider.of<Products>(context, listen: false)
-                          .deleteProduct(id);
-                      Navigator.of(ctx).pop(true);
-                    },
-                    child: const Text('Yes'),
-                  ),
-                ],
-              ),
+              builder: (ctx) {
+                final navigator = Navigator.of(ctx); //mora zbog async
+                return AlertDialog(
+                  title: const Text('Are u sure?'),
+                  content:
+                      const Text('Do u want to remove the item from the cart?'),
+                  actions: [
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.of(ctx).pop(false);
+                      },
+                      child: const Text('No'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () async {
+                        try {
+                          await Provider.of<Products>(context, listen: false)
+                              .deleteProduct(id);
+                          navigator.pop(true);
+                        } catch (error) {
+                          scaffold.hideCurrentSnackBar();
+                          scaffold.showSnackBar(
+                            const SnackBar(
+                              content: Text('Deleting failed!'),
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
+                          navigator.pop(true);
+                        }
+                      },
+                      child: const Text('Yes'),
+                    ),
+                  ],
+                );
+              },
             ),
             icon: const Icon(Icons.delete),
-            color: Theme.of(context).errorColor,
+            color: Theme.of(context).colorScheme.error,
           ),
         ]),
       ),
