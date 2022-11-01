@@ -6,12 +6,33 @@ import '../widgets/app_drawer.dart';
 import '../widgets/user_product_item.dart';
 import './edit_product_screen.dart';
 
-class UserProductsScreen extends StatelessWidget {
-  static const routeName = '/user-products';
+class UserProductsScreen extends StatefulWidget {
   const UserProductsScreen({super.key});
+  static const routeName = '/user-products';
+
+  @override
+  State<UserProductsScreen> createState() => _UserProductsScreenState();
+}
+
+class _UserProductsScreenState extends State<UserProductsScreen> {
+  var _isLoading = false;
+
+  @override
+  void initState() {
+    Future.delayed(Duration.zero).then((_) async {
+      setState(() {
+        _isLoading = true;
+      });
+      await Provider.of<Products>(context, listen: false).getProducts(true);
+      setState(() {
+        _isLoading = false;
+      });
+    });
+    super.initState();
+  }
 
   Future<void> _refreshProducts(BuildContext context) async {
-    await Provider.of<Products>(context, listen: false).getProducts();
+    await Provider.of<Products>(context, listen: false).getProducts(true);
   }
 
   @override
@@ -30,25 +51,27 @@ class UserProductsScreen extends StatelessWidget {
         ],
       ),
       drawer: const AppDrawer(),
-      body: RefreshIndicator(
-        onRefresh: () => _refreshProducts(context),
-        child: Padding(
-          padding: const EdgeInsets.all(8),
-          child: ListView.builder(
-            itemBuilder: (ctx, index) => Column(
-              children: [
-                UserProductItem(
-                  productsData.items[index].id,
-                  productsData.items[index].title,
-                  productsData.items[index].imageUrl,
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : RefreshIndicator(
+              onRefresh: () => _refreshProducts(context),
+              child: Padding(
+                padding: const EdgeInsets.all(8),
+                child: ListView.builder(
+                  itemBuilder: (ctx, index) => Column(
+                    children: [
+                      UserProductItem(
+                        productsData.items[index].id,
+                        productsData.items[index].title,
+                        productsData.items[index].imageUrl,
+                      ),
+                      const Divider(),
+                    ],
+                  ),
+                  itemCount: productsData.items.length,
                 ),
-                const Divider(),
-              ],
+              ),
             ),
-            itemCount: productsData.items.length,
-          ),
-        ),
-      ),
     );
   }
 }

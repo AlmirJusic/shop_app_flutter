@@ -17,6 +17,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
   final _imageUrlController = TextEditingController();
   final _imageUrlFocusNode = FocusNode();
   final _form = GlobalKey<FormState>();
+
   var _editedProduct = Product(
     id: '',
     title: '',
@@ -33,6 +34,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
   };
   var _isInit = true;
   var _isLoading = false;
+  var _isEdit = false;
 
   @override
   void initState() {
@@ -53,9 +55,12 @@ class _EditProductScreenState extends State<EditProductScreen> {
           'price': _editedProduct.price.toString(),
           'imageUrl': '',
         };
+
         _imageUrlController.text = _editedProduct.imageUrl;
+        _isEdit = true;
       }
     }
+
     _isInit = false;
     super.didChangeDependencies();
   }
@@ -134,7 +139,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Edit Product'),
+        title: _isEdit ? const Text('Edit Product') : const Text('Add Product'),
         actions: [
           IconButton(
             onPressed: _saveForm,
